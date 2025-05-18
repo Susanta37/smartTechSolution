@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+body.light-mode {
+  background: #f5f5f5;
+  color: #222;
+}
+
+body.dark-mode {
+  background: #181818;
+  color: #f5f5f5;
+}
