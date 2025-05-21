@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -8,7 +8,8 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   CalendarIcon,
-  ChevronDownIcon,
+  ChevronLeft,
+  ChevronRight,
   Loader2Icon,
   PackageIcon,
   RefreshCwIcon,
@@ -21,32 +22,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-// JSDoc for data structures
-/**
- * @typedef {Object} InventoryItem
- * @property {string} _id
- * @property {string} name
- * @property {string} description
- * @property {number} unitPrice
- * @property {number} quantity
- * @property {string} category
- */
-
-/**
- * @typedef {Object} ServiceItem
- * @property {string} _id
- * @property {string} name
- * @property {string} description
- * @property {number} price
- * @property {string} [photoUrl]
- * @property {string} createdBy
- * @property {{inventoryId: string, quantity: number}[]} [inventoryItems]
- * @property {string} createdAt
- */
-
 export default function ServicesPage() {
   const { t } = useTranslation();
-  // State
   const [services, setServices] = useState([]);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [loadingServices, setLoadingServices] = useState(false);
@@ -58,6 +35,10 @@ export default function ServicesPage() {
   const [sortDirection, setSortDirection] = useState("desc");
   const [timeFilter, setTimeFilter] = useState("all");
   const [specificDate, setSpecificDate] = useState("");
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 6;
 
   // React Hook Form
   const {
@@ -82,62 +63,104 @@ export default function ServicesPage() {
     name: "inventoryItems",
   });
 
-  // Fetch services and inventory
+  // Prevent state updates on unmounted component
+  const isMounted = useRef(true);
   useEffect(() => {
-    fetchServices();
-    fetchInventory();
-  }, [t]);
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
-  const fetchServices = async () => {
+  // Fetch services and inventory
+  const fetchServices = useCallback(async () => {
     setLoadingServices(true);
+    const toastId = toast.loading(t("loadingServices"));
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      if (!token) throw new Error(t("noToken"));
 
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/services`, {
         headers: { "x-auth-token": token },
       });
 
-      setServices(response.data || []);
+      const data = Array.isArray(response.data) ? response.data : [];
+      if (isMounted.current) {
+        setServices(data);
+        setTotalPages(Math.max(1, Math.ceil(data.length / itemsPerPage)));
+        toast.success(t("servicesLoaded"), { id: toastId });
+      }
     } catch (error) {
-      console.error("Error fetching services:", error);
-      toast.error(t("errorFetchingServices"));
+      const status = error.response?.status;
+      let errorMessage = t("errorFetchingServices");
+      if (status === 401) errorMessage = t("unauthorized");
+      else if (status === 403) errorMessage = t("forbidden");
+      else if (status === 404) errorMessage = t("servicesNotFound");
+      else if (status === 500) errorMessage = t("serverError");
+      else errorMessage = error.response?.data?.message || t("errorFetchingServices");
+      if (isMounted.current) {
+        toast.error(errorMessage, { id: toastId });
+      }
     } finally {
-      setLoadingServices(false);
+      if (isMounted.current) {
+        setLoadingServices(false);
+      }
     }
-  };
+  }, [t]);
 
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     setLoadingInventory(true);
+    const toastId = toast.loading(t("loadingInventory"));
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      if (!token) throw new Error(t("noToken"));
 
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/inventory`, {
         headers: { "x-auth-token": token },
       });
 
-      setInventoryItems(response.data || []);
+      const data = Array.isArray(response.data) ? response.data : [];
+      if (isMounted.current) {
+        setInventoryItems(data);
+        toast.success(t("inventoryLoaded"), { id: toastId });
+      }
     } catch (error) {
-      console.error("Error fetching inventory:", error);
-      toast.error(t("errorFetchingInventory"));
+      const status = error.response?.status;
+      let errorMessage = t("errorFetchingInventory");
+      if (status === 401) errorMessage = t("unauthorized");
+      else if (status === 403) errorMessage = t("forbidden");
+      else if (status === 404) errorMessage = t("inventoryNotFound");
+      else if (status === 500) errorMessage = t("serverError");
+      else errorMessage = error.response?.data?.message || t("errorFetchingInventory");
+      if (isMounted.current) {
+        toast.error(errorMessage, { id: toastId });
+      }
     } finally {
-      setLoadingInventory(false);
+      if (isMounted.current) {
+        setLoadingInventory(false);
+      }
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchServices();
+    fetchInventory();
+  }, [fetchServices, fetchInventory]);
 
   // Handle form submission (create or update)
   const onSubmit = async (data) => {
+    if (submitting) return; // Prevent double submission
     setSubmitting(true);
+    const toastId = toast.loading(editingService ? t("updatingService") : t("creatingService"));
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      if (!token) throw new Error(t("noToken"));
 
       const serviceData = {
-        name: data.name,
-        description: data.description,
+        name: data.name.trim(),
+        description: data.description.trim(),
         price: data.price,
-        photoUrl: data.photoUrl || undefined,
+        photoUrl: data.photoUrl.trim() || undefined,
         inventoryItems: data.inventoryItems.map((item) => ({
           inventoryId: item.inventoryId,
           quantity: item.quantity,
@@ -150,77 +173,109 @@ export default function ServicesPage() {
         response = await axios.put(
           `${import.meta.env.VITE_API_URL}/api/services/${editingService._id}`,
           serviceData,
-          {
-            headers: { "x-auth-token": token },
-          }
+          { headers: { "x-auth-token": token } }
         );
-        setServices(
-          services.map((s) => (s._id === editingService._id ? response.data : s))
-        );
-        toast.success(t("serviceUpdated"));
+        if (isMounted.current) {
+          setServices(
+            services.map((s) => (s._id === editingService._id ? response.data : s))
+          );
+          toast.success(t("serviceUpdated"), { id: toastId });
+        }
       } else {
         // Create service
         response = await axios.post(
           `${import.meta.env.VITE_API_URL}/api/services`,
           serviceData,
-          {
-            headers: { "x-auth-token": token },
-          }
+          { headers: { "x-auth-token": token } }
         );
-        setServices([response.data, ...services]);
-        toast.success(t("serviceCreated"));
+        if (isMounted.current) {
+          setServices([response.data, ...services]);
+          toast.success(t("serviceCreated"), { id: toastId });
+        }
       }
 
       reset();
       setEditingService(null);
+      // Recalculate pagination
+      if (isMounted.current) {
+        setTotalPages(Math.max(1, Math.ceil((services.length + (editingService ? 0 : 1)) / itemsPerPage)));
+        if (currentPage > totalPages) setCurrentPage(totalPages);
+      }
     } catch (error) {
-      console.error("Error saving service:", error);
-      const errorMessage =
-        error.response?.data?.message || t(editingService ? "serviceUpdateFailed" : "serviceCreateFailed");
-      toast.error(errorMessage);
+      const status = error.response?.status;
+      let errorMessage = editingService ? t("serviceUpdateFailed") : t("serviceCreateFailed");
+      if (status === 400) errorMessage = error.response?.data?.message || t("badRequest");
+      else if (status === 401) errorMessage = t("unauthorized");
+      else if (status === 403) errorMessage = t("forbidden");
+      else if (status === 404) errorMessage = t("serviceNotFound");
+      else if (status === 500) errorMessage = t("serverError");
+      if (isMounted.current) {
+        toast.error(errorMessage, { id: toastId });
+      }
     } finally {
-      setSubmitting(false);
+      if (isMounted.current) {
+        setSubmitting(false);
+      }
     }
   };
 
   // Handle edit service
   const handleEdit = (service) => {
-    setEditingService(service);
-    setValue("name", service.name);
-    setValue("description", service.description);
-    setValue("price", service.price);
-    setValue("photoUrl", service.photoUrl || "");
-    setValue(
-      "inventoryItems",
-      service.inventoryItems.map((item) => ({
-        inventoryId: item.inventoryId,
-        quantity: item.quantity,
-      }))
-    );
+    if (isMounted.current) {
+      setEditingService(service);
+      setValue("name", service.name || "");
+      setValue("description", service.description || "");
+      setValue("price", service.price || 0);
+      setValue("photoUrl", service.photoUrl || "");
+      setValue(
+        "inventoryItems",
+        service.inventoryItems?.map((item) => ({
+          inventoryId: item.inventoryId,
+          quantity: item.quantity,
+        })) || []
+      );
+    }
   };
 
   // Handle delete service
   const handleDelete = async (id) => {
     if (!confirm(t("confirmDeleteService"))) return;
+    const toastId = toast.loading(t("deletingService"));
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      if (!token) throw new Error(t("noToken"));
 
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/services/${id}`, {
         headers: { "x-auth-token": token },
       });
 
-      setServices(services.filter((s) => s._id !== id));
-      toast.success(t("serviceDeleted"));
+      if (isMounted.current) {
+        const updatedServices = services.filter((s) => s._id !== id);
+        setServices(updatedServices);
+        setTotalPages(Math.max(1, Math.ceil(updatedServices.length / itemsPerPage)));
+        if (currentPage > totalPages && totalPages > 0) {
+          setCurrentPage(totalPages);
+        }
+        toast.success(t("serviceDeleted"), { id: toastId });
+      }
     } catch (error) {
-      console.error("Error deleting service:", error);
-      toast.error(t("serviceDeleteFailed"));
+      const status = error.response?.status;
+      let errorMessage = t("serviceDeleteFailed");
+      if (status === 400) errorMessage = error.response?.data?.message || t("badRequest");
+      else if (status === 401) errorMessage = t("unauthorized");
+      else if (status === 403) errorMessage = t("forbidden");
+      else if (status === 404) errorMessage = t("serviceNotFound");
+      else if (status === 500) errorMessage = t("serverError");
+      if (isMounted.current) {
+        toast.error(errorMessage, { id: toastId });
+      }
     }
   };
 
   // Filter and sort services
   const filteredServices = services
     .filter((service) => {
+      if (!service) return false;
       if (searchTerm) {
         if (
           !service.name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -231,6 +286,7 @@ export default function ServicesPage() {
       }
 
       const serviceDate = new Date(service.createdAt);
+      if (isNaN(serviceDate.getTime())) return false;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -300,32 +356,59 @@ export default function ServicesPage() {
         : bValue - aValue;
     });
 
+  // Paginate filtered services
+  const paginatedServices = filteredServices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   // Handle sort toggle
   const toggleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("desc");
+    if (isMounted.current) {
+      if (sortField === field) {
+        setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      } else {
+        setSortField(field);
+        setSortDirection("desc");
+      }
+      setCurrentPage(1); // Reset to first page on sort
+    }
+  };
+
+  // Pagination controls
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
   };
 
   // Format date
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return t("unknownDate");
+      return new Intl.DateTimeFormat("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
+    } catch {
+      return t("unknownDate");
+    }
   };
 
   // Get inventory item name by ID
   const getInventoryItemName = (inventoryId) => {
-    const item = inventoryItems.find((i) => i._id === inventoryId);
-    return item ? item.name : "Unknown";
+    const item = inventoryItems.find((i) => i?._id === inventoryId);
+    return item ? item.name : t("unknownItem");
   };
 
   return (
@@ -415,9 +498,17 @@ export default function ServicesPage() {
                   <input
                     id="photoUrl"
                     type="url"
-                    {...register("photoUrl")}
+                    {...register("photoUrl", {
+                      pattern: {
+                        value: /^https?:\/\/[^\s$.?#].[^\s]*$/i,
+                        message: t("invalidUrl"),
+                      },
+                    })}
                     className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   />
+                  {errors.photoUrl && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.photoUrl.message}</p>
+                  )}
                 </div>
 
                 {/* Inventory Items */}
@@ -542,7 +633,10 @@ export default function ServicesPage() {
                       type="text"
                       placeholder={t("searchServices")}
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1); // Reset to first page on search
+                      }}
                       className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </div>
@@ -552,6 +646,7 @@ export default function ServicesPage() {
                       onChange={(e) => {
                         setTimeFilter(e.target.value);
                         if (e.target.value !== "specific") setSpecificDate("");
+                        setCurrentPage(1); // Reset to first page on filter
                       }}
                       className="block w-full sm:w-40 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                     >
@@ -572,7 +667,10 @@ export default function ServicesPage() {
                       <input
                         type="date"
                         value={specificDate}
-                        onChange={(e) => setSpecificDate(e.target.value)}
+                        onChange={(e) => {
+                          setSpecificDate(e.target.value);
+                          setCurrentPage(1); // Reset to first page on date change
+                        }}
                         className="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                         max={new Date().toISOString().split("T")[0]}
                       />
@@ -617,6 +715,18 @@ export default function ServicesPage() {
                               </span>
                             )}
                           </div>
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell"
+                        >
+                          {t("description")}
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden lg:table-cell"
+                        >
+                          {t("photo")}
                         </th>
                         <th
                           scope="col"
@@ -669,24 +779,45 @@ export default function ServicesPage() {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredServices.map((service) => (
+                      {paginatedServices.map((service) => (
                         <tr key={service._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               <WrenchIcon className="h-5 w-5 text-purple-500 mr-2" />
                               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                {service.name}
+                                {service.name || t("unknown")}
                               </span>
                             </div>
                           </td>
+                          <td className="px-6 py-4 hidden md:table-cell">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {(service.description?.slice(0, 50) || t("noDescription")) +
+                                (service.description?.length > 50 ? "..." : "")}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 hidden lg:table-cell">
+                            {service.photoUrl ? (
+                              <img
+                                src={service.photoUrl}
+                                alt={service.name || t("unknown")}
+                                className="h-10 w-10 object-contain"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = "/placeholder.svg";
+                                }}
+                              />
+                            ) : (
+                              <span className="text-sm text-gray-500 dark:text-gray-400">{t("noImage")}</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                              ₹{service.price.toLocaleString()}
+                              ₹{(service.price || 0).toLocaleString()}
                             </span>
                           </td>
                           <td className="px-6 py-4">
                             <div className="text-sm text-gray-700 dark:text-gray-300">
-                              {service.inventoryItems.length > 0 ? (
+                              {service.inventoryItems?.length > 0 ? (
                                 <ul className="list-disc list-inside">
                                   {service.inventoryItems.map((item, index) => (
                                     <li key={index}>
@@ -706,12 +837,14 @@ export default function ServicesPage() {
                             <button
                               onClick={() => handleEdit(service)}
                               className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
+                              aria-label={t("edit")}
                             >
                               <EditIcon className="h-5 w-5" />
                             </button>
                             <button
                               onClick={() => handleDelete(service._id)}
                               className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                              aria-label={t("delete")}
                             >
                               <TrashIcon className="h-5 w-5" />
                             </button>
@@ -722,6 +855,31 @@ export default function ServicesPage() {
                   </table>
                 )}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center p-6 space-x-2 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    onClick={prevPage}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    aria-label={t("previousPage")}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <div className="px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700">
+                    {currentPage} / {totalPages}
+                  </div>
+                  <button
+                    onClick={nextPage}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    aria-label={t("nextPage")}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
 
               {/* Services Summary */}
               {filteredServices.length > 0 && (
@@ -735,7 +893,7 @@ export default function ServicesPage() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">{t("averagePrice")}</p>
                       <p className="text-xl font-bold text-gray-900 dark:text-white">
                         ₹{Math.round(
-                          filteredServices.reduce((sum, s) => sum + s.price, 0) / filteredServices.length
+                          filteredServices.reduce((sum, s) => sum + (s.price || 0), 0) / filteredServices.length
                         ).toLocaleString()}
                       </p>
                     </div>

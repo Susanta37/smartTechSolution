@@ -3,6 +3,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const dashboardRoutes = require("./routes/dashboard");
+const employeeDashboardRoutes = require('./routes/employeeDashboard');
 
 dotenv.config();
 const app = express();
@@ -24,7 +25,7 @@ app.use('/api/banking', require('./routes/banking'));
 app.use('/api/commissions', require('./routes/commissions'));
 app.use('/api/permissions', require('./routes/permissions'));
 app.use('/api/dashboard', require('./routes/dashboard'));
-app.use("/api/dashboard", dashboardRoutes);
+app.use('/api/employee', employeeDashboardRoutes);
 
 
 const PORT = process.env.PORT || 5000;

@@ -15,7 +15,7 @@ import {
   UserPlusIcon,
   ScaleIcon,
 } from "@heroicons/react/24/outline";
-import { Banknote, ReceiptIndianRupee } from "lucide-react";
+import { Banknote, ClipboardCheckIcon, ReceiptIndianRupee } from "lucide-react";
 
 
 const Sidebar = ({ isOpen, onClose }) => {
@@ -27,10 +27,11 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const navItems = [
     { name: "dashboard", path: "/", icon: <HomeIcon className="w-5 h-5" /> },
-    { name: "inventory", path: "/inventory", icon: <ArchiveBoxIcon className="w-5 h-5" /> },
-    { name: "services", path: "/services", icon: <ShoppingBagIcon className="w-5 h-5" /> },
     { name: "sales", path: "/sales", icon: <ScaleIcon className="w-5 h-5" /> },
     { name: "banking", path: "/banking", icon: <ReceiptIndianRupee className="w-5 h-5" /> },
+    { name: "inventory", path: "/inventory", icon: <ArchiveBoxIcon className="w-5 h-5" /> },
+    { name: "services", path: "/services", icon: <ShoppingBagIcon className="w-5 h-5" /> },
+    { name: "categories", path: "/categories", icon: <ClipboardCheckIcon className="w-5 h-5" /> },
     { name: "commissions", path: "/commissions", icon: <BanknotesIcon className="w-5 h-5" /> },
     { name: "permissions", path: "/permissions", icon: <Cog6ToothIcon className="w-5 h-5" /> },
   ];

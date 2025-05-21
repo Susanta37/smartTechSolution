@@ -42,7 +42,7 @@ const Navbar = ({ onMenuClick }) => {
                 <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-200" />
               </button>
             )}
-            <h1 className="text-lg font-bold text-blue-600 dark:text-blue-400">S T S</h1>
+            <img src="/logo.png" alt="logo"  className="h-10 w-10 flex justify-center items-center"/>
           </div>
           <div className="flex items-center space-x-4">
             <button

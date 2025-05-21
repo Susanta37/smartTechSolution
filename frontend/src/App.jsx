@@ -17,6 +17,7 @@ import { fetchProfile } from "./redux/authSlice";
 import AddUser from "./pages/AddUser";
 import Sale from "./pages/Sale";
 import Banking from "./pages/Banking";
+import Category from "./pages/Category";
 
 const Home = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -61,10 +62,11 @@ function App() {
               element={isAuthenticated ? <Navigate to={location.state?.from || "/"} replace /> : <Register />}
             />
             <Route path="/" element={<Home />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/services" element={<Services />} />
             <Route path="/sales" element={<Sale/>} />
             <Route path="/banking" element={<Banking/>} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/categories" element={<Category />} />
             <Route path="/commissions" element={<Commissions />} />
             <Route path="/permissions" element={<Permissions />} />
             <Route path="/add-user" element={isAuthenticated && user?.role === "admin" ? <AddUser /> : <Navigate to="/" />} />

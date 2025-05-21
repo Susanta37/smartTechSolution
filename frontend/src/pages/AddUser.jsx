@@ -1,29 +1,11 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import {
-  User,
-  UserPlus,
-  Search,
-  Filter,
-  X,
-  Edit,
-  Trash2,
-  RefreshCw,
-  Phone,
-  MapPin,
-  Mail,
-  Shield,
-  Eye,
-  EyeOff,
-  AlertCircle,
-} from "lucide-react";
-import axios from "axios";
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
+import { User, UserPlus, Search, Filter, X, Edit, Trash2, RefreshCw, Phone, Mail, Shield, Eye, EyeOff, AlertCircle, Check, Plus, MapPin } from 'lucide-react'
+import axios from "axios"
 
 // Toast notification component
 const Toast = ({ message, type, onClose }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   return (
     <div
       className={`fixed top-4 right-4 z-50 flex items-center p-4 mb-4 rounded-lg shadow ${
@@ -42,13 +24,13 @@ const Toast = ({ message, type, onClose }) => {
         <X className="w-4 h-4" />
       </button>
     </div>
-  );
-};
+  )
+}
 
 // Confirmation modal component
 const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
-  const { t } = useTranslation();
-  if (!isOpen) return null;
+  const { t } = useTranslation()
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -92,20 +74,21 @@ const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-const UserManagementDashboard = () => {
-  const { t } = useTranslation();
+const AddUser = () => {
+  const { t } = useTranslation()
+  
   // State for user list
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [sortField, setSortField] = useState("name");
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [roleFilter, setRoleFilter] = useState("all")
+  const [sortField, setSortField] = useState("name")
+  const [sortDirection, setSortDirection] = useState("asc")
 
-  // State for add/edit user form
+  // State for add user form
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -113,17 +96,13 @@ const UserManagementDashboard = () => {
     role: "employee",
     phone: "",
     address: "",
-    photo: "",
-  });
-  const [editMode, setEditMode] = useState(false);
-  const [editUserId, setEditUserId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // State for toast notifications
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" })
 
   // State for confirmation modal
   const [confirmModal, setConfirmModal] = useState({
@@ -131,116 +110,98 @@ const UserManagementDashboard = () => {
     title: "",
     message: "",
     onConfirm: () => {},
-  });
+  })
 
   // Fetch users on component mount
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers()
+  }, [])
 
   // Fetch users from API
   const fetchUsers = async () => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      setLoading(true)
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No authentication token found")
 
       const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/users`, {
         headers: { "x-auth-token": token },
-      });
-      setUsers(response.data || []);
+      })
+      setUsers(response.data || [])
     } catch (error) {
-      console.error("Error fetching users:", error);
-      showToast("errorFetchingUsers", "error");
+      console.error("Error fetching users:", error)
+      showToast("errorFetchingUsers", "error")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // Show toast notification
   const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-  };
+    setToast({ show: true, message, type })
+  }
 
   // Handle form input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
 
     // Clear error for this field if it exists
     if (formErrors[name]) {
-      setFormErrors({ ...formErrors, [name]: null });
+      setFormErrors({ ...formErrors, [name]: null })
     }
-  };
+  }
 
   // Validate form
   const validateForm = () => {
-    const errors = {};
-    if (!formData.name.trim()) errors.name = "nameRequired";
-    if (!formData.email.trim()) errors.email = "emailRequired";
-    if (!editMode && !formData.password.trim()) errors.password = "passwordRequired";
-    if (formData.password && formData.password.length < 6) errors.password = "passwordMinLength";
-    if (!formData.role) errors.role = "roleRequired";
+    const errors = {}
+    if (!formData.name.trim()) errors.name = "nameRequired"
+    if (!formData.email.trim()) errors.email = "emailRequired"
+    if (!formData.password.trim()) errors.password = "passwordRequired"
+    if (formData.password && formData.password.length < 6) errors.password = "passwordMinLength"
+    if (!formData.role) errors.role = "roleRequired"
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) errors.email = "invalidEmail";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (formData.email && !emailRegex.test(formData.email)) errors.email = "invalidEmail"
 
     // Phone validation (optional)
-    if (formData.phone && !/^\d{10}$/.test(formData.phone)) errors.phone = "invalidPhone";
+    if (formData.phone && !/^\d{10}$/.test(formData.phone)) errors.phone = "invalidPhone"
 
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   // Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!validateForm()) return;
+    if (!validateForm()) return
 
     try {
-      setIsSubmitting(true);
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token found");
+      setIsSubmitting(true)
+      const token = localStorage.getItem("token")
+      if (!token) throw new Error("No authentication token found")
 
       const config = {
         headers: { "x-auth-token": token },
-      };
-
-      if (editMode) {
-        // Update existing user
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/users/${editUserId}`,
-          {
-            ...formData,
-            // Only include password if it was changed
-            ...(formData.password ? { password: formData.password } : {}),
-          },
-          config
-        );
-        showToast("userUpdated");
-        setIsModalOpen(false);
-      } else {
-        // Create new user
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/users/register`, formData, config);
-        showToast("userAdded");
       }
 
+      // Create new user
+      await axios.post(`${import.meta.env.VITE_API_URL}/api/users/register`, formData, config)
+      showToast("userAdded", "success")
+
       // Reset form and refresh user list
-      resetForm();
-      fetchUsers();
+      resetForm()
+      fetchUsers()
     } catch (error) {
-      console.error("Error saving user:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.errors?.[0]?.msg ||
-        (editMode ? "userUpdateFailed" : "userAddFailed");
-      showToast(errorMessage, "error");
+      console.error("Error adding user:", error)
+      const errorMessage = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || "userAddFailed"
+      showToast(errorMessage, "error")
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // Reset form to initial state
   const resetForm = () => {
@@ -251,30 +212,10 @@ const UserManagementDashboard = () => {
       role: "employee",
       phone: "",
       address: "",
-      photo: "",
-    });
-    setEditMode(false);
-    setEditUserId(null);
-    setIsModalOpen(false);
-    setShowPassword(false);
-    setFormErrors({});
-  };
-
-  // Edit user
-  const handleEditUser = (user) => {
-    setFormData({
-      name: user.name,
-      email: user.email,
-      password: "", // Don't populate password for security
-      role: user.role,
-      phone: user.phone || "",
-      address: user.address || "",
-      photo: user.photo || "",
-    });
-    setEditMode(true);
-    setEditUserId(user._id);
-    setIsModalOpen(true);
-  };
+    })
+    setShowPassword(false)
+    setFormErrors({})
+  }
 
   // Delete user
   const handleDeleteUser = (userId) => {
@@ -284,21 +225,21 @@ const UserManagementDashboard = () => {
       message: "confirmDeleteUser",
       onConfirm: async () => {
         try {
-          const token = localStorage.getItem("token");
+          const token = localStorage.getItem("token")
           await axios.delete(`${import.meta.env.VITE_API_URL}/api/users/${userId}`, {
             headers: { "x-auth-token": token },
-          });
-          showToast("userDeleted");
-          fetchUsers();
+          })
+          showToast("userDeleted", "success")
+          fetchUsers()
         } catch (error) {
-          console.error("Error deleting user:", error);
-          showToast(error.response?.data?.message || "userDeleteFailed", "error");
+          console.error("Error deleting user:", error)
+          showToast(error.response?.data?.message || "userDeleteFailed", "error")
         } finally {
-          setConfirmModal({ ...confirmModal, isOpen: false });
+          setConfirmModal({ ...confirmModal, isOpen: false })
         }
       },
-    });
-  };
+    })
+  }
 
   // Filter and sort users
   const filteredAndSortedUsers = users
@@ -307,23 +248,23 @@ const UserManagementDashboard = () => {
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (user.phone && user.phone.includes(searchTerm)) ||
-        (user.address && user.address.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesRole = roleFilter === "all" || user.role === roleFilter;
-      return matchesSearch && matchesRole;
+        (user.address && user.address.toLowerCase().includes(searchTerm.toLowerCase()))
+      const matchesRole = roleFilter === "all" || user.role === roleFilter
+      return matchesSearch && matchesRole
     })
     .sort((a, b) => {
-      let aValue = a[sortField];
-      let bValue = b[sortField];
+      let aValue = a[sortField]
+      let bValue = b[sortField]
       if (sortField === "createdAt") {
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
+        aValue = new Date(a.createdAt)
+        bValue = new Date(b.createdAt)
       }
       if (sortDirection === "asc") {
-        return aValue > bValue ? 1 : -1;
+        return aValue > bValue ? 1 : -1
       } else {
-        return aValue < bValue ? 1 : -1;
+        return aValue < bValue ? 1 : -1
       }
-    });
+    })
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-6">
@@ -345,16 +286,19 @@ const UserManagementDashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
         <div className="flex items-center">
           <UserPlus className="w-8 h-8 text-blue-600 dark:text-blue-400 mr-3" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("userManagement")}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("addUser")}</h1>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Add User Form (Inline) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Add User Form */}
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t("addNewUser")}</h2>
+            <div className="flex items-center mb-4">
+              <Plus className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("addNewUser")}</h2>
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Name */}
               <div>
@@ -374,6 +318,7 @@ const UserManagementDashboard = () => {
                 />
                 {formErrors.name && <p className="mt-1 text-sm text-red-500">{t(formErrors.name)}</p>}
               </div>
+              
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -392,6 +337,7 @@ const UserManagementDashboard = () => {
                 />
                 {formErrors.email && <p className="mt-1 text-sm text-red-500">{t(formErrors.email)}</p>}
               </div>
+              
               {/* Password */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -421,6 +367,7 @@ const UserManagementDashboard = () => {
                 </div>
                 {formErrors.password && <p className="mt-1 text-sm text-red-500">{t(formErrors.password)}</p>}
               </div>
+              
               {/* Role */}
               <div>
                 <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -437,9 +384,11 @@ const UserManagementDashboard = () => {
                 >
                   <option value="employee">{t("employee")}</option>
                   <option value="admin">{t("admin")}</option>
+                  <option value="manager">{t("manager")}</option>
                 </select>
                 {formErrors.role && <p className="mt-1 text-sm text-red-500">{t(formErrors.role)}</p>}
               </div>
+              
               {/* Phone */}
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -458,6 +407,7 @@ const UserManagementDashboard = () => {
                 />
                 {formErrors.phone && <p className="mt-1 text-sm text-red-500">{t(formErrors.phone)}</p>}
               </div>
+              
               {/* Address */}
               <div>
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -473,30 +423,23 @@ const UserManagementDashboard = () => {
                   placeholder={t("enterAddress")}
                 />
               </div>
-              {/* Photo URL */}
-              <div>
-                <label htmlFor="photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {t("photoUrl")}
-                </label>
-                <input
-                  id="photo"
-                  name="photo"
-                  type="text"
-                  value={formData.photo}
-                  onChange={handleChange}
-                  className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                  placeholder={t("enterPhotoUrl")}
-                />
-              </div>
+              
               {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                >
+                  {t("reset")}
+                </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && <RefreshCw className="animate-spin -ml-1 mr-2 h-4 w-4" />}
-                  {isSubmitting ? t("saving") : t("addUser")}
+                  {isSubmitting ? t("adding") : t("addUser")}
                 </button>
               </div>
             </form>
@@ -507,11 +450,15 @@ const UserManagementDashboard = () => {
         <div className="lg:col-span-2">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="p-5 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("userList")}</h2>
+              <div className="flex items-center">
+                <User className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("userList")}</h2>
+              </div>
             </div>
+            
             {/* Search and filters */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                     <Search className="w-5 h-5 text-gray-500 dark:text-gray-400" />
@@ -527,17 +474,19 @@ const UserManagementDashboard = () => {
                 <div className="flex items-center">
                   <Filter className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-2" />
                   <select
-                    className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5"
+                    className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
                   >
                     <option value="all">{t("allRoles")}</option>
                     <option value="admin">{t("admin")}</option>
                     <option value="employee">{t("employee")}</option>
+                    <option value="manager">{t("manager")}</option>
                   </select>
                 </div>
               </div>
             </div>
+            
             {/* User table */}
             {loading ? (
               <div className="p-8 text-center">
@@ -551,13 +500,13 @@ const UserManagementDashboard = () => {
                     <tr>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
                         onClick={() => {
                           if (sortField === "name") {
-                            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                            setSortDirection(sortDirection === "asc" ? "desc" : "asc")
                           } else {
-                            setSortField("name");
-                            setSortDirection("asc");
+                            setSortField("name")
+                            setSortDirection("asc")
                           }
                         }}
                       >
@@ -598,13 +547,13 @@ const UserManagementDashboard = () => {
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
                         onClick={() => {
                           if (sortField === "email") {
-                            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                            setSortDirection(sortDirection === "asc" ? "desc" : "asc")
                           } else {
-                            setSortField("email");
-                            setSortDirection("asc");
+                            setSortField("email")
+                            setSortDirection("asc")
                           }
                         }}
                       >
@@ -645,13 +594,13 @@ const UserManagementDashboard = () => {
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
                         onClick={() => {
                           if (sortField === "role") {
-                            setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                            setSortDirection(sortDirection === "asc" ? "desc" : "asc")
                           } else {
-                            setSortField("role");
-                            setSortDirection("asc");
+                            setSortField("role")
+                            setSortDirection("asc")
                           }
                         }}
                       >
@@ -692,13 +641,13 @@ const UserManagementDashboard = () => {
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                        className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                       >
                         {t("contact")}
                       </th>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                        className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                       >
                         {t("actions")}
                       </th>
@@ -707,14 +656,18 @@ const UserManagementDashboard = () => {
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {filteredAndSortedUsers.map((user) => (
                       <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               {user.photo ? (
                                 <img
                                   className="h-10 w-10 rounded-full object-cover"
-                                  src={user.photo}
+                                  src={user.photo || "/placeholder.svg"}
                                   alt={user.name}
+                                  onError={(e) => {
+                                    e.target.onerror = null
+                                    e.target.src = "/placeholder.svg?height=40&width=40"
+                                  }}
                                 />
                               ) : (
                                 <div className="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
@@ -730,18 +683,22 @@ const UserManagementDashboard = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <Mail className="h-4 w-4 mr-1" />
-                            {user.email}
+                            <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate max-w-[120px] sm:max-w-[150px]" title={user.email}>
+                              {user.email}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span
                               className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                 user.role === "admin"
                                   ? "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400"
+                                  : user.role === "manager"
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
                                   : "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
                               }`}
                             >
@@ -750,33 +707,27 @@ const UserManagementDashboard = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-4 whitespace-normal">
                           {user.phone && (
                             <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-1">
-                              <Phone className="h-4 w-4 mr-1" />
-                              {user.phone}
+                              <Phone className="h-4 w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate">{user.phone}</span>
                             </div>
                           )}
                           {user.address && (
                             <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                              <MapPin className="h-4 w-4 mr-1" />
-                              <span className="truncate max-w-[150px]" title={user.address}>
+                              <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                              <span className="truncate max-w-[120px] sm:max-w-[150px]" title={user.address}>
                                 {user.address}
                               </span>
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-3"
-                          >
-                            <Edit className="h-5 w-5" />
-                            <span className="sr-only">{t("edit")}</span>
-                          </button>
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button
                             onClick={() => handleDeleteUser(user._id)}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                            aria-label={t("deleteUser")}
                           >
                             <Trash2 className="h-5 w-5" />
                             <span className="sr-only">{t("delete")}</span>
@@ -792,218 +743,20 @@ const UserManagementDashboard = () => {
                 <p className="text-gray-500 dark:text-gray-400">{t("noUsersFound")}</p>
               </div>
             )}
+            
+            {/* Mobile view for users (visible on small screens) */}
+            <div className="sm:hidden">
+              {!loading && filteredAndSortedUsers.length > 0 && (
+                <div className="px-4 py-3 bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase">
+                  {t("swipeToSeeMore")}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Edit User Modal */}
-      <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setIsModalOpen(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 backdrop-blur-md" />
-          </Transition.Child>
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
-                    {t("editUser")}
-                  </Dialog.Title>
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                  <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                    {/* Name */}
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t("name")}*
-                      </label>
-                      <input
-                        id="name"
-                        name="name"
-                        type="text"
-                        value={formData.name}
-                        onChange={handleChange}
-                        className={`bg-gray-50 dark:bg-gray-700 border ${
-                          formErrors.name ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-600"
-                        } text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-                        placeholder={t("enterName")}
-                      />
-                      {formErrors.name && <p className="mt-1 text-sm text-red-500">{t(formErrors.name)}</p>}
-                    </div>
-                    {/* Email */}
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t("email")}*
-                      </label>
-                      <input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className={`bg-gray-50 dark:bg-gray-700 border ${
-                          formErrors.email ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-600"
-                        } text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-                        placeholder={t("enterEmail")}
-                      />
-                      {formErrors.email && <p className="mt-1 text-sm text-red-500">{t(formErrors.email)}</p>}
-                    </div>
-                    {/* Password */}
-                    <div>
-                      <label
-                        htmlFor="password"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        {t("password")} <span className="text-xs">({t("leaveBlank")})</span>
-                      </label>
-                      <div className="relative">
-                        <input
-                          id="password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          value={formData.password}
-                          onChange={handleChange}
-                          className={`bg-gray-50 dark:bg-gray-700 border ${
-                            formErrors.password
-                              ? "border-red-500 dark:border-red-500"
-                              : "border-gray-300 dark:border-gray-600"
-                          } text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pr-10`}
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 dark:text-gray-400"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                      {formErrors.password && <p className="mt-1 text-sm text-red-500">{t(formErrors.password)}</p>}
-                    </div>
-                    {/* Role */}
-                    <div>
-                      <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {t("role")}*
-                      </label>
-                      <select
-                        id="role"
-                        name="role"
-                        value={formData.role}
-                        onChange={handleChange}
-                        className={`bg-gray-50 dark:bg-gray-700 border ${
-                          formErrors.role ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-600"
-                        } text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-                      >
-                        <option value="employee">{t("employee")}</option>
-                        <option value="admin">{t("admin")}</option>
-                      </select>
-                      {formErrors.role && <p className="mt-1 text-sm text-red-500">{t(formErrors.role)}</p>}
-                    </div>
-                    {/* Phone */}
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        {t("phone")}
-                      </label>
-                      <input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        className={`bg-gray-50 dark:bg-gray-700 border ${
-                          formErrors.phone ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-600"
-                        } text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-                        placeholder={t("enterPhone")}
-                      />
-                      {formErrors.phone && <p className="mt-1 text-sm text-red-500">{t(formErrors.phone)}</p>}
-                    </div>
-                    {/* Address */}
-                    <div>
-                      <label
-                        htmlFor="address"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        {t("address")}
-                      </label>
-                      <textarea
-                        id="address"
-                        name="address"
-                        rows={2}
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder={t("enterAddress")}
-                      />
-                    </div>
-                    {/* Photo URL */}
-                    <div>
-                      <label
-                        htmlFor="photo"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        {t("photoUrl")}
-                      </label>
-                      <input
-                        id="photo"
-                        name="photo"
-                        type="text"
-                        value={formData.photo}
-                        onChange={handleChange}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        placeholder={t("enterPhotoUrl")}
-                      />
-                    </div>
-                    {/* Form Actions */}
-                    <div className="flex justify-end space-x-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={resetForm}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
-                        disabled={isSubmitting}
-                      >
-                        {t("cancel")}
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting && <RefreshCw className="animate-spin -ml-1 mr-2 h-4 w-4" />}
-                        {isSubmitting ? t("saving") : t("updateUser")}
-                      </button>
-                    </div>
-                  </form>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
     </div>
-  );
-};
+  )
+}
 
-export default UserManagementDashboard;
+export default AddUser

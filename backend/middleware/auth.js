@@ -26,17 +26,21 @@ const restrictTo = (...roles) => {
   };
 };
 
-const restrictOperation = (operation) => {
+const restrictOperation = (...operations) => {
   return async (req, res, next) => {
-    if (req.user.role === 'admin') return next(); 
     try {
+      if (req.user.role === 'admin') return next();
+
       const permission = await Permission.findOne({ employeeId: req.user.id });
-      if (!permission || !permission.operations.find(op => op.operation === operation && op.allowed)) {
-        return res.status(403).json({ message: `Not authorized to perform ${operation}` });
+      if (!permission || !operations.some(op => permission.operations.includes(op))) {
+        return res.status(403).json({
+          message: `Not authorized to perform operation(s): ${operations.join(', ')}`,
+        });
       }
       next();
     } catch (err) {
-      res.status(500).json({ message: 'Server error' });
+      console.error('Error in restrictOperation:', err.stack);
+      res.status(500).json({ message: 'Server error', error: err.message });
     }
   };
 };
